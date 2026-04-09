@@ -1,0 +1,10 @@
+{
+  "watch": ["src", "public"],
+  "ext": "js,html,css",
+  "ignore": [
+    "logs/*",
+    "config/*",
+    "node_modules/*",
+    "examples/*"
+  ]
+}

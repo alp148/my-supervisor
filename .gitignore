@@ -1,0 +1,22 @@
+.env
+# IDE specific files
+/.idea/
+
+# Locally installed dependencies
+/node_modules/
+/assets/
+/log/
+/assets/uploads/*
+/assets/workspace/*
+# Deployment specific configuration
+/etc/config.json
+
+# Code coverage report output
+/.nyc_output/
+.DS_Store
+
+*.log
+*.deb
+bk.zip
+sorba-tree-api_10.0.47_all/usr/share/sorba-tree-api/app/etc/config.json
+cloud-credentials.json

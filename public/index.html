@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supervisor Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body>
+  <div class="app-container">
+    <header class="glass-panel">
+      <div class="header-content">
+        <div class="logo">
+          <i class="fa-solid fa-microchip"></i>
+          <h1>My Supervisor</h1>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <button id="theme-toggle" class="btn secondary-btn icon-btn theme-toggle" onclick="toggleTheme()" title="Toggle Theme">
+            <i class="fa-solid fa-moon"></i>
+          </button>
+          <div class="status-indicator">
+            <div class="pulse-dot"></div>
+            Online
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="controls-bar glass-panel">
+        <div class="bulk-actions">
+          <button class="btn success-btn" onclick="triggerAllAction('start')">
+            <i class="fa-solid fa-play"></i> Start All
+          </button>
+          <button class="btn warning-btn" onclick="triggerAllAction('restart')">
+            <i class="fa-solid fa-rotate-right"></i> Restart All
+          </button>
+          <button class="btn danger-btn" onclick="triggerAllAction('stop')">
+            <i class="fa-solid fa-stop"></i> Stop All
+          </button>
+          <button class="btn secondary-btn" onclick="exportAllConfigs()">
+            <i class="fa-solid fa-file-export"></i> Export All
+          </button>
+          <button class="btn primary-btn" onclick="reloadConfigs()">
+            <i class="fa-solid fa-sync"></i> Reload Disk
+          </button>
+        </div>
+        <div class="main-actions">
+          <button class="btn primary-btn" onclick="triggerImport()">
+            <i class="fa-solid fa-file-import"></i> Import
+          </button>
+          <input type="file" id="import-input" style="display: none" accept=".json" onchange="handleImport(event)">
+          <button class="btn accent-btn" onclick="openAddModal()">
+            <i class="fa-solid fa-plus"></i> Add Process
+          </button>
+          <button id="refresh-btn" class="btn primary-btn" onclick="toggleRealTime()">
+            <i class="fa-solid fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+      </div>
+
+      <div id="process-list" class="table-container">
+        <!-- Processes will be injected here -->
+        <div class="loading-state">
+           <i class="fa-solid fa-circle-notch fa-spin"></i> Loading processes...
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add Process Modal -->
+  <div id="add-modal" class="modal">
+    <div class="modal-content glass-panel">
+      <div class="modal-header">
+        <h3>Add New Process</h3>
+        <button class="close-btn" onclick="closeAddModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body form-body">
+        <form id="add-process-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="uid">UID (Unique ID)*</label>
+              <input type="text" id="uid" name="uid" placeholder="e.g. my-worker-1" required>
+            </div>
+            <div class="form-group">
+              <label for="title">Title</label>
+              <input type="text" id="title" name="title" placeholder="Human readable name">
+            </div>
+            <div class="form-group full-width">
+              <label for="description">Description</label>
+              <input type="text" id="description" name="description" placeholder="What does this process do?">
+            </div>
+            <div class="form-group full-width">
+              <label for="command">Command*</label>
+              <input type="text" id="command" name="command" placeholder="e.g. node, python, /path/to/script" required>
+            </div>
+            <div class="form-group full-width">
+              <label>Arguments</label>
+              <div id="args-list" class="args-list">
+                <!-- Dynamic argument fields will be injected here -->
+              </div>
+              <button type="button" class="btn secondary-btn small-btn" onclick="addArgumentField()">
+                <i class="fa-solid fa-plus"></i> Add Argument
+              </button>
+            </div>
+            <div class="form-group full-width">
+              <label>Environment Variables</label>
+              <div id="env-list" class="args-list">
+                <!-- Dynamic env fields will be injected here -->
+              </div>
+              <button type="button" class="btn secondary-btn small-btn" onclick="addEnvVarField()">
+                <i class="fa-solid fa-plus"></i> Add Variable
+              </button>
+            </div>
+            <div class="form-group">
+              <label for="cwd">Working Directory (CWD)</label>
+              <input type="text" id="cwd" name="cwd" placeholder="Current directory if empty">
+            </div>
+            <div class="form-group checkbox-group">
+              <label>
+                <input type="checkbox" id="autostart" name="autostart" checked>
+                Autostart on supervisor boot
+              </label>
+              <label>
+                <input type="checkbox" id="autorestart" name="autorestart" checked>
+                Autorestart on crash
+              </label>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn secondary-btn" onclick="closeAddModal()">Cancel</button>
+        <button type="submit" form="add-process-form" class="btn accent-btn">Create Process</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logs Modal -->
+  <div id="logs-modal" class="modal">
+    <div class="modal-content glass-panel">
+      <div class="modal-header">
+        <h3 id="modal-title">Logs: </h3>
+        <div style="display: flex; gap: 0.75rem; align-items: center;">
+          <button id="download-logs-btn" class="btn secondary-btn small-btn" title="Download Full Logs">
+            <i class="fa-solid fa-file-arrow-down"></i> Download
+          </button>
+          <button class="close-btn" onclick="closeLogs()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <pre id="logs-container">Loading logs...</pre>
+      </div>
+      <div class="modal-footer">
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirm-modal" class="modal">
+    <div class="modal-content glass-panel" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 id="confirm-title">Confirm Action</h3>
+        <button class="close-btn" onclick="closeConfirm(false)"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-message" style="font-size: 1rem; color: var(--text-main); line-height: 1.5;"></p>
+      </div>
+      <div class="modal-footer" style="gap: 1rem;">
+        <button class="btn secondary-btn" onclick="closeConfirm(false)">Cancel</button>
+        <button id="confirm-proceed-btn" class="btn danger-btn">Proceed</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Selection Modal -->
+  <div id="import-modal" class="modal">
+    <div class="modal-content glass-panel" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3>Select Processes to Import</h3>
+        <button class="close-btn" onclick="closeImportModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" id="import-select-all" checked onchange="toggleImportSelectAll(this.checked)">
+            Select All
+          </label>
+          <span id="import-count-summary" style="font-size: 0.85rem; color: var(--text-muted);"></span>
+        </div>
+        <div id="import-list" class="import-list">
+          <!-- Dynamic import rows will be injected here -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn secondary-btn" onclick="closeImportModal()">Cancel</button>
+        <button class="btn accent-btn" onclick="confirmImport()">Import Selected</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
