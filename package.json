@@ -6,15 +6,17 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "build:deb": "node-deb --",
+    "build:deb": "npm prune --production && ./node_modules/.bin/node-deb --install-strategy copy -- src public config logs bin",
     "ctl": "node bin/ctl.js"
   },
   "bin": {
     "my-supervisor-ctl": "bin/ctl.js",
     "ctl": "bin/ctl.js"
   },
-  "node-deb": {
-    "entry": "src/index.js",
+  "node_deb": {
+    "entrypoints": {
+      "daemon": "src/index.js"
+    },
     "init": "systemd",
     "daemon": true,
     "user": "root"
@@ -27,10 +29,10 @@
     "morgan": "^1.10.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
-    "winston": "^3.19.0"
+    "winston": "^3.19.0",
+    "node-deb": "^0.10.7"
   },
   "devDependencies": {
-    "node-deb": "^0.10.7",
     "nodemon": "^3.1.14"
   }
 }
