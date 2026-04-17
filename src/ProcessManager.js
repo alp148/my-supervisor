@@ -191,6 +191,43 @@ class ProcessManager {
   }
 
   /**
+   * Update an existing process configuration, persist to disk, and restart if necessary.
+   * @param {string} uid - Process unique identifier
+   * @param {object} newConfig - The new configuration data
+   * @returns {object} - Updated process snapshot
+   */
+  async updateProcess(uid, newConfig) {
+    const proc = this._processes.get(uid);
+    if (!proc) {
+      throw new Error(`Process with uid "${uid}" not found.`);
+    }
+
+    if (!newConfig.command) {
+      throw new Error('Field "command" is required.');
+    }
+
+    const finalConfig = {
+      ...proc.config,
+      title: newConfig.title || uid,
+      description: newConfig.description || '',
+      command: newConfig.command,
+      args: Array.isArray(newConfig.args) ? newConfig.args : (newConfig.args ? newConfig.args.split(',').map(s => s.trim()) : []),
+      cwd: newConfig.cwd || null,
+      env: newConfig.env || {},
+      autostart: !!newConfig.autostart,
+      autorestart: newConfig.autorestart !== false,
+      maxRestarts: parseInt(newConfig.maxRestarts, 10) || proc.config.maxRestarts || 5,
+    };
+
+    const filePath = path.join(this.processesDir, `${uid}.json`);
+    fs.writeFileSync(filePath, JSON.stringify(finalConfig, null, 2), 'utf8');
+
+    await proc.updateConfig(finalConfig);
+
+    return proc.toJSON();
+  }
+
+  /**
    * Reload all configurations from disk, synchronizing the internal state.
    */
   async reloadConfigs() {

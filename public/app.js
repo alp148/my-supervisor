@@ -15,6 +15,119 @@ const modalTitle = document.getElementById('modal-title');
 const logsContainer = document.getElementById('logs-container');
 const refreshLogsBtn = document.getElementById('refresh-logs-btn');
 
+// ─── Edit Process Modal ─────────────────────────────────────────────────────
+window.openEditModal = async function (uid) {
+  try {
+    const config = await apiCall(`/api/processes/${uid}/export`);
+
+    document.getElementById('edit-uid').value = config.uid || '';
+    document.getElementById('edit-title').value = config.title || '';
+    document.getElementById('edit-description').value = config.description || '';
+    document.getElementById('edit-command').value = config.command || '';
+    document.getElementById('edit-cwd').value = config.cwd || '';
+    document.getElementById('edit-autostart').checked = !!config.autostart;
+    document.getElementById('edit-autorestart').checked = config.autorestart !== false;
+
+    // Args
+    const argsList = document.getElementById('edit-args-list');
+    argsList.innerHTML = '';
+    if (config.args && config.args.length > 0) {
+      config.args.forEach(arg => addEditArgumentField(arg));
+    } else {
+      addEditArgumentField();
+    }
+
+    // Env
+    const envList = document.getElementById('edit-env-list');
+    envList.innerHTML = '';
+    if (config.env) {
+      Object.entries(config.env).forEach(([k, v]) => addEditEnvVarField(k, v));
+    }
+
+    document.getElementById('edit-modal').classList.add('active');
+  } catch (err) {
+    showToast(`Failed to load config: ${err.message}`, 'error');
+  }
+};
+
+window.closeEditModal = function () {
+  document.getElementById('edit-modal').classList.remove('active');
+  document.getElementById('edit-process-form').reset();
+};
+
+window.addEditArgumentField = function (value = '') {
+  const container = document.getElementById('edit-args-list');
+  const div = document.createElement('div');
+  div.className = 'arg-entry';
+  div.innerHTML = `
+    <input type="text" class="arg-input" value="${value}" placeholder="Argument">
+    <button type="button" class="remove-arg-btn" onclick="this.parentElement.remove()" title="Remove Argument">
+      <i class="fa-solid fa-trash"></i>
+    </button>
+  `;
+  container.appendChild(div);
+  if (!value) div.querySelector('input').focus();
+};
+
+window.addEditEnvVarField = function (key = '', value = '') {
+  const container = document.getElementById('edit-env-list');
+  const div = document.createElement('div');
+  div.className = 'env-entry';
+  div.innerHTML = `
+    <input type="text" class="env-key" value="${key}" placeholder="Key (e.g. PORT)">
+    <input type="text" class="env-value" value="${value}" placeholder="Value">
+    <button type="button" class="remove-arg-btn" onclick="this.parentElement.remove()" title="Remove Variable">
+      <i class="fa-solid fa-trash"></i>
+    </button>
+  `;
+  container.appendChild(div);
+  if (!key) div.querySelector('.env-key').focus();
+};
+
+document.getElementById('edit-process-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const formData = new FormData(e.target);
+
+  const argInputs = e.target.querySelectorAll('.arg-input');
+  const args = Array.from(argInputs).map(i => i.value.trim()).filter(v => v !== '');
+
+  const envKeys = e.target.querySelectorAll('.env-key');
+  const envVals = e.target.querySelectorAll('.env-value');
+  const env = {};
+  envKeys.forEach((keyInput, idx) => {
+    const k = keyInput.value.trim();
+    if (k) env[k] = envVals[idx].value || '';
+  });
+
+  const data = {
+    title: formData.get('title'),
+    description: formData.get('description'),
+    command: formData.get('command'),
+    args: args,
+    env: env,
+    cwd: formData.get('cwd'),
+    autostart: formData.get('autostart') === 'on',
+    autorestart: formData.get('autorestart') === 'on',
+  };
+
+  // const submitBtn = e.target.querySelector('button[type="submit"]');
+  // const origHtml = submitBtn.innerHTML;
+  // submitBtn.disabled = true;
+  // submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Saving...';
+
+  try {
+    const res = await apiCall(`/api/processes/${formData.get('uid')}`, 'PUT', data);
+    closeEditModal();
+    fetchProcesses();
+    showToast('Process updated successfully.', 'success');
+  } catch (err) {
+    showToast(`Error: ${err.message}`, 'error');
+  } finally {
+    // submitBtn.disabled = false;
+    // submitBtn.innerHTML = origHtml;
+  }
+});
+
 // ─── Add Process Modal ──────────────────────────────────────────────────────
 function openAddModal() {
   document.getElementById('add-modal').classList.add('active');
@@ -116,8 +229,8 @@ document.getElementById('add-process-form').addEventListener('submit', async (e)
   } catch (err) {
     showToast(`Error: ${err.message}`, 'error');
   } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Create Process';
+    // submitBtn.disabled = false;
+    // submitBtn.textContent = 'Create Process';
   }
 });
 
@@ -303,6 +416,9 @@ function renderProcesses() {
           <td class="col-restarts">${proc.restartCount || 0}</td>
           <td class="col-actions">
             <div class="table-actions">
+              <button class="btn secondary-btn icon-btn" onclick="openEditModal('${proc.uid}')" title="Edit">
+                <i class="fa-solid fa-pen"></i>
+              </button>
               <button class="btn success-btn icon-btn" onclick="triggerAction('${proc.uid}', 'start')" title="Start" ${isRunning || isDisabled ? 'disabled' : ''}>
                 <i class="fa-solid fa-play"></i>
               </button>

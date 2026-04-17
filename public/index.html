@@ -140,6 +140,74 @@
     </div>
   </div>
 
+  <!-- Edit Process Modal -->
+  <div id="edit-modal" class="modal">
+    <div class="modal-content glass-panel">
+      <div class="modal-header">
+        <h3>Edit Process</h3>
+        <button class="close-btn" onclick="closeEditModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body form-body">
+        <form id="edit-process-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="edit-uid">UID (Unique ID)</label>
+              <input type="text" id="edit-uid" name="uid" readonly style="opacity: 0.7; cursor: not-allowed;">
+            </div>
+            <div class="form-group">
+              <label for="edit-title">Title</label>
+              <input type="text" id="edit-title" name="title" placeholder="Human readable name">
+            </div>
+            <div class="form-group full-width">
+              <label for="edit-description">Description</label>
+              <input type="text" id="edit-description" name="description" placeholder="What does this process do?">
+            </div>
+            <div class="form-group full-width">
+              <label for="edit-command">Command*</label>
+              <input type="text" id="edit-command" name="command" placeholder="e.g. node, python, /path/to/script" required>
+            </div>
+            <div class="form-group full-width">
+              <label>Arguments</label>
+              <div id="edit-args-list" class="args-list">
+                <!-- Dynamic argument fields will be injected here -->
+              </div>
+              <button type="button" class="btn secondary-btn small-btn" onclick="addEditArgumentField()">
+                <i class="fa-solid fa-plus"></i> Add Argument
+              </button>
+            </div>
+            <div class="form-group full-width">
+              <label>Environment Variables</label>
+              <div id="edit-env-list" class="args-list">
+                <!-- Dynamic env fields will be injected here -->
+              </div>
+              <button type="button" class="btn secondary-btn small-btn" onclick="addEditEnvVarField()">
+                <i class="fa-solid fa-plus"></i> Add Variable
+              </button>
+            </div>
+            <div class="form-group">
+              <label for="edit-cwd">Working Directory (CWD)</label>
+              <input type="text" id="edit-cwd" name="cwd" placeholder="Current directory if empty">
+            </div>
+            <div class="form-group checkbox-group">
+              <label>
+                <input type="checkbox" id="edit-autostart" name="autostart">
+                Autostart on supervisor boot
+              </label>
+              <label>
+                <input type="checkbox" id="edit-autorestart" name="autorestart">
+                Autorestart on crash
+              </label>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn secondary-btn" onclick="closeEditModal()">Cancel</button>
+        <button type="submit" form="edit-process-form" class="btn accent-btn">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Logs Modal -->
   <div id="logs-modal" class="modal">
     <div class="modal-content glass-panel">

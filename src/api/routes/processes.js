@@ -509,6 +509,48 @@ function processRoutes(pm) {
   /**
    * @swagger
    * /api/processes/{uid}:
+   *   put:
+   *     summary: Update an existing process
+   *     tags: [Processes]
+   *     parameters:
+   *       - in: path
+   *         name: uid
+   *         required: true
+   *         schema:
+   *           type: string
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [command]
+   *     responses:
+   *       200:
+   *         description: Process updated
+   *       400:
+   *         description: Invalid input
+   *       404:
+   *         description: Process not found
+   *       500:
+   *         description: Internal server error
+   */
+  router.put('/:uid', async (req, res) => {
+    try {
+      const proc = resolve(req, res);
+      if (!proc) return;
+
+      const updatedSnapshot = await pm.updateProcess(req.params.uid, req.body);
+      res.json(updatedSnapshot);
+    } catch (err) {
+      const status = err.message.includes('required') ? 400 : 500;
+      res.status(status).json({ error: err.message });
+    }
+  });
+
+  /**
+   * @swagger
+   * /api/processes/{uid}:
    *   delete:
    *     summary: Permanently remove a process
    *     tags: [Processes]
