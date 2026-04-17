@@ -110,10 +110,11 @@ document.getElementById('edit-process-form').addEventListener('submit', async (e
     autorestart: formData.get('autorestart') === 'on',
   };
 
-  // const submitBtn = e.target.querySelector('button[type="submit"]');
-  // const origHtml = submitBtn.innerHTML;
-  // submitBtn.disabled = true;
-  // submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Saving...';
+  console.log(e.target);
+  const submitBtn = document.getElementById('edit-modal').querySelector('button[type="submit"]');
+  const origHtml = submitBtn.innerHTML;
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Saving...';
 
   try {
     const res = await apiCall(`/api/processes/${formData.get('uid')}`, 'PUT', data);
@@ -123,8 +124,8 @@ document.getElementById('edit-process-form').addEventListener('submit', async (e
   } catch (err) {
     showToast(`Error: ${err.message}`, 'error');
   } finally {
-    // submitBtn.disabled = false;
-    // submitBtn.innerHTML = origHtml;
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = origHtml;
   }
 });
 
@@ -208,9 +209,10 @@ document.getElementById('add-process-form').addEventListener('submit', async (e)
     autorestart: formData.get('autorestart') === 'on',
   };
 
-  // const submitBtn = e.target.querySelector('button[type="submit"]');
-  // submitBtn.disabled = true;
-  // submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Creating...';
+  const submitBtn = document.getElementById('add-modal').querySelector('button[type="submit"]');
+  const origHtml = submitBtn.innerHTML;
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Creating...';
 
   try {
     const res = await fetch('/api/processes', {
@@ -229,8 +231,8 @@ document.getElementById('add-process-form').addEventListener('submit', async (e)
   } catch (err) {
     showToast(`Error: ${err.message}`, 'error');
   } finally {
-    // submitBtn.disabled = false;
-    // submitBtn.textContent = 'Create Process';
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = origHtml;
   }
 });
 
