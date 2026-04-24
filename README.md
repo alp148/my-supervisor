@@ -2,6 +2,8 @@
 
 A **supervisord-like** process manager for Node.js. Manages child processes defined in individual JSON config files, auto-restarts crashed processes, and exposes a REST API to control them at runtime.
 
+Includes a beautiful, glassmorphism-styled **Web Dashboard** for easy real-time monitoring and control, and a fully-featured **CLI tool** for remote management.
+
 ---
 
 ## Project Structure
@@ -104,13 +106,25 @@ Base URL: `http://localhost:9000`
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/api/processes` | List all processes and their status |
+| `POST` | `/api/processes` | Create a new process configuration |
 | `GET` | `/api/processes/:uid` | Get single process status |
+| `PUT` | `/api/processes/:uid` | Update an existing process configuration |
+| `DELETE` | `/api/processes/:uid` | Permanently remove a process |
 | `POST` | `/api/processes/:uid/start` | Start a process |
 | `POST` | `/api/processes/:uid/stop` | Stop a process |
 | `POST` | `/api/processes/:uid/restart` | Restart a process |
 | `POST` | `/api/processes/:uid/enable` | Enable a disabled process |
 | `POST` | `/api/processes/:uid/disable` | Disable (stop and prevent restarts) |
 | `GET` | `/api/processes/:uid/logs` | Get last N log lines (`?lines=100`) |
+| `GET` | `/api/processes/:uid/logs/events` | Stream process logs via SSE |
+| `GET` | `/api/processes/:uid/logs/download`| Download the full process log file |
+| `GET` | `/api/processes/events` | Stream process status updates via SSE |
+| `POST` | `/api/processes/all/start` | Bulk start all processes |
+| `POST` | `/api/processes/all/stop` | Bulk stop all processes |
+| `POST` | `/api/processes/all/restart` | Bulk restart all processes |
+| `POST` | `/api/processes/all/reload` | Reload all process configurations from disk |
+| `GET` | `/api/processes/all/export` | Export all process configurations |
+| `POST` | `/api/processes/import` | Import process configurations |
 | `GET` | `/health` | Health check |
 
 ### Process States
@@ -177,6 +191,49 @@ curl "http://localhost:9000/api/processes/counter-001/logs?lines=50"
   ]
 }
 ```
+
+---
+
+## Web Dashboard
+
+The application includes a built-in web dashboard accessible at `http://localhost:9000/` by default.
+
+Features include:
+- **Real-time Monitoring:** View process statuses updating in real-time via Server-Sent Events (SSE).
+- **Process Control:** Start, stop, restart, enable, and disable processes with a single click.
+- **Live Logs:** Stream process logs directly in the browser.
+- **Configuration Editing:** Edit process configurations directly from the UI without touching JSON files.
+- **Modern Design:** Features a responsive, vibrant glassmorphism aesthetic.
+
+---
+
+## CLI Tool
+
+Manage processes remotely from your terminal using the included CLI.
+
+```bash
+# Link the CLI globally
+npm link
+
+# Usage
+my-supervisor-ctl status
+my-supervisor-ctl start <uid>
+my-supervisor-ctl stop <uid>
+my-supervisor-ctl restart <uid>
+my-supervisor-ctl logs <uid> --follow
+```
+
+---
+
+## Debian Package
+
+You can build a `.deb` package for production deployment.
+
+```bash
+npm run build:deb
+```
+
+This will create a Debian package that sets up `my-supervisor` as a systemd service, ensuring it starts on boot and manages your configured processes reliably.
 
 ---
 
