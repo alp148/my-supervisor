@@ -162,6 +162,7 @@ class ProcessManager {
       args: Array.isArray(config.args) ? config.args : (config.args ? config.args.split(',').map(s => s.trim()) : []),
       cwd: config.cwd || null,
       env: config.env || {},
+      waitOn: Array.isArray(config.waitOn) ? config.waitOn : (config.waitOn ? config.waitOn.split(',').map(s => s.trim()) : []),
       autostart: !!config.autostart,
       autorestart: config.autorestart !== false, // default to true
       maxRestarts: parseInt(config.maxRestarts, 10) || 5,
@@ -214,6 +215,7 @@ class ProcessManager {
       args: Array.isArray(newConfig.args) ? newConfig.args : (newConfig.args ? newConfig.args.split(',').map(s => s.trim()) : []),
       cwd: newConfig.cwd || null,
       env: newConfig.env || {},
+      waitOn: Array.isArray(newConfig.waitOn) ? newConfig.waitOn : (newConfig.waitOn ? newConfig.waitOn.split(',').map(s => s.trim()) : []),
       autostart: !!newConfig.autostart,
       autorestart: newConfig.autorestart !== false,
       maxRestarts: parseInt(newConfig.maxRestarts, 10) || proc.config.maxRestarts || 5,

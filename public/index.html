@@ -116,6 +116,15 @@
                 <i class="fa-solid fa-plus"></i> Add Variable
               </button>
             </div>
+            <div class="form-group full-width">
+              <label>Wait On Conditions</label>
+              <div id="waiton-list" class="args-list">
+                <!-- Dynamic waitOn fields will be injected here -->
+              </div>
+              <button type="button" class="btn secondary-btn small-btn" onclick="addWaitOnField()">
+                <i class="fa-solid fa-plus"></i> Add Condition
+              </button>
+            </div>
             <div class="form-group">
               <label for="cwd">Working Directory (CWD)</label>
               <input type="text" id="cwd" name="cwd" placeholder="Current directory if empty">
@@ -182,6 +191,15 @@
               </div>
               <button type="button" class="btn secondary-btn small-btn" onclick="addEditEnvVarField()">
                 <i class="fa-solid fa-plus"></i> Add Variable
+              </button>
+            </div>
+            <div class="form-group full-width">
+              <label>Wait On Conditions</label>
+              <div id="edit-waiton-list" class="args-list">
+                <!-- Dynamic waitOn fields will be injected here -->
+              </div>
+              <button type="button" class="btn secondary-btn small-btn" onclick="addEditWaitOnField()">
+                <i class="fa-solid fa-plus"></i> Add Condition
               </button>
             </div>
             <div class="form-group">

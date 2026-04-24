@@ -2,11 +2,13 @@
 
 const { spawn } = require('child_process');
 const EventEmitter = require('events');
+const waitOn = require('wait-on');
 const LogManager = require('./LogManager');
 
 const STATES = {
   STOPPED: 'stopped',
   STARTING: 'starting',
+  WAITING: 'waiting',
   RUNNING: 'running',
   STOPPING: 'stopping',
   CRASHED: 'crashed',
@@ -51,7 +53,7 @@ class ProcessWrapper extends EventEmitter {
     if (this._state === STATES.DISABLED) {
       throw new Error(`Process "${this.uid}" is disabled.`);
     }
-    if (this._state === STATES.RUNNING || this._state === STATES.STARTING) {
+    if (this._state === STATES.RUNNING || this._state === STATES.STARTING || this._state === STATES.WAITING) {
       throw new Error(`Process "${this.uid}" is already ${this._state}.`);
     }
     this._restartCount = 0;
@@ -82,6 +84,7 @@ class ProcessWrapper extends EventEmitter {
           if (this._child) this._child.kill('SIGKILL');
         }, 5000);
       } else {
+        this._setState(STATES.STOPPED);
         resolve();
       }
     });
@@ -116,7 +119,7 @@ class ProcessWrapper extends EventEmitter {
    * If sensitive fields (command, args, env, cwd) change, restart the process if it's running.
    */
   async updateConfig(newConfig) {
-    const sensitiveFields = ['command', 'args', 'env', 'cwd'];
+    const sensitiveFields = ['command', 'args', 'env', 'cwd', 'waitOn'];
     let needsRestart = false;
 
     for (const field of sensitiveFields) {
@@ -176,10 +179,28 @@ class ProcessWrapper extends EventEmitter {
     });
   }
 
-  _spawn() {
+  async _spawn() {
+    this._intentionalStop = false;
+
+    if (this.config.waitOn && Array.isArray(this.config.waitOn) && this.config.waitOn.length > 0) {
+      this._setState(STATES.WAITING);
+      this._log(`[supervisor] Waiting for conditions: ${this.config.waitOn.join(', ')}`, 'stdout');
+      try {
+        await waitOn({ resources: this.config.waitOn });
+      } catch (err) {
+        this._log(`[supervisor] wait-on error: ${err.message}`, 'stderr');
+        this._setState(STATES.CRASHED);
+        return;
+      }
+      
+      if (this._intentionalStop || this._state !== STATES.WAITING) {
+        this._log(`[supervisor] Cancelled wait`, 'stdout');
+        return;
+      }
+    }
+
     const { command, args = [], cwd, env } = this.config;
 
-    this._intentionalStop = false;
     this._setState(STATES.STARTING);
     this._log(`[supervisor] Starting: ${command} ${args.join(' ')}`, 'stdout');
 

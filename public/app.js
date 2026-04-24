@@ -37,6 +37,15 @@ window.openEditModal = async function (uid) {
       addEditArgumentField();
     }
 
+    // WaitOn
+    const waitOnList = document.getElementById('edit-waiton-list');
+    waitOnList.innerHTML = '';
+    if (config.waitOn && config.waitOn.length > 0) {
+      config.waitOn.forEach(w => addEditWaitOnField(w));
+    } else {
+      addEditWaitOnField();
+    }
+
     // Env
     const envList = document.getElementById('edit-env-list');
     envList.innerHTML = '';
@@ -69,6 +78,20 @@ window.addEditArgumentField = function (value = '') {
   if (!value) div.querySelector('input').focus();
 };
 
+window.addEditWaitOnField = function (value = '') {
+  const container = document.getElementById('edit-waiton-list');
+  const div = document.createElement('div');
+  div.className = 'arg-entry';
+  div.innerHTML = `
+    <input type="text" class="waiton-input" value="${value}" placeholder="Condition (e.g. tcp:3000)">
+    <button type="button" class="remove-arg-btn" onclick="this.parentElement.remove()" title="Remove Condition">
+      <i class="fa-solid fa-trash"></i>
+    </button>
+  `;
+  container.appendChild(div);
+  if (!value) div.querySelector('input').focus();
+};
+
 window.addEditEnvVarField = function (key = '', value = '') {
   const container = document.getElementById('edit-env-list');
   const div = document.createElement('div');
@@ -91,6 +114,9 @@ document.getElementById('edit-process-form').addEventListener('submit', async (e
   const argInputs = e.target.querySelectorAll('.arg-input');
   const args = Array.from(argInputs).map(i => i.value.trim()).filter(v => v !== '');
 
+  const waitonInputs = e.target.querySelectorAll('.waiton-input');
+  const waitOn = Array.from(waitonInputs).map(i => i.value.trim()).filter(v => v !== '');
+
   const envKeys = e.target.querySelectorAll('.env-key');
   const envVals = e.target.querySelectorAll('.env-value');
   const env = {};
@@ -106,6 +132,7 @@ document.getElementById('edit-process-form').addEventListener('submit', async (e
     args: args,
     env: env,
     cwd: formData.get('cwd'),
+    waitOn: waitOn,
     autostart: formData.get('autostart') === 'on',
     autorestart: formData.get('autorestart') === 'on',
   };
@@ -137,6 +164,11 @@ function openAddModal() {
   argsList.innerHTML = '';
   addArgumentField();
 
+  // Reset waitOn list
+  const waitOnList = document.getElementById('waiton-list');
+  waitOnList.innerHTML = '';
+  addWaitOnField();
+
   // Reset env list
   const envList = document.getElementById('env-list');
   envList.innerHTML = '';
@@ -159,6 +191,19 @@ window.addArgumentField = function (value = '') {
   `;
   container.appendChild(div);
   div.querySelector('input').focus();
+};
+
+window.addWaitOnField = function (value = '') {
+  const container = document.getElementById('waiton-list');
+  const div = document.createElement('div');
+  div.className = 'arg-entry';
+  div.innerHTML = `
+    <input type="text" class="waiton-input" value="${value}" placeholder="Condition (e.g. tcp:3000)">
+    <button type="button" class="remove-arg-btn" onclick="this.parentElement.remove()" title="Remove Condition">
+      <i class="fa-solid fa-trash"></i>
+    </button>
+  `;
+  container.appendChild(div);
 };
 
 window.addEnvVarField = function (key = '', value = '') {
@@ -185,6 +230,12 @@ document.getElementById('add-process-form').addEventListener('submit', async (e)
     .map(input => input.value.trim())
     .filter(val => val !== '');
 
+  // Collect waitOn conditions
+  const waitonInputs = e.target.querySelectorAll('.waiton-input');
+  const waitOn = Array.from(waitonInputs)
+    .map(input => input.value.trim())
+    .filter(val => val !== '');
+
   // Collect env vars from individual inputs
   const envKeys = e.target.querySelectorAll('.env-key');
   const envVals = e.target.querySelectorAll('.env-value');
@@ -205,6 +256,7 @@ document.getElementById('add-process-form').addEventListener('submit', async (e)
     args: args,
     env: env, // Send as object
     cwd: formData.get('cwd'),
+    waitOn: waitOn,
     autostart: formData.get('autostart') === 'on',
     autorestart: formData.get('autorestart') === 'on',
   };
@@ -353,6 +405,7 @@ function startRealTimeUpdates() {
 function getBadgeHtml(stateStr) {
   let cls = 'stopped';
   if (stateStr === 'running') cls = 'running';
+  if (stateStr === 'waiting') cls = 'waiting';
   if (stateStr === 'disabled') cls = 'disabled';
   if (stateStr === 'finished') cls = 'finished';
   if (stateStr === 'error' || stateStr === 'crashed') cls = 'error';
